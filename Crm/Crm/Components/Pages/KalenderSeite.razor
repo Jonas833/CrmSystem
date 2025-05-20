@@ -1,0 +1,58 @@
+﻿@page "/kalender"
+@using Microsoft.EntityFrameworkCore
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+@inject Crm.Data.AppDbContext DbContext
+@using Crm.Data
+@using Microsoft.JSInterop
+
+
+<h3>Termin-Kalender</h3>
+<div id="calendar"></div>
+
+@code {
+    private DotNetObjectReference<KalenderSeite>? objRef;
+    private List<Termin> termine = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        termine = await DbContext.Termine
+            .Where(t => t.Datum > DateTime.MinValue)
+            .ToListAsync();
+
+        Console.WriteLine($"Geladene Termine: {termine.Count}");
+
+        foreach (var t in termine)
+        {
+            Console.WriteLine($"Termin: {t.TerminName} – {t.Datum}");
+        }
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            objRef = DotNetObjectReference.Create(this);
+            // Übergib die Termine an JS
+            var jsTermine = termine.Select(t => new
+            {
+                title = t.TerminName,
+                start = t.Datum.ToString("yyyy-MM-dd")
+            });
+            // Debug-Ausgabe
+            foreach (var e in jsTermine)
+            {
+                Console.WriteLine($"Event: {e.title} - {e.start}");
+            }
+
+            await JS.InvokeVoidAsync("calendarFunctions.initializeCalendarWithEvents", jsTermine);
+
+        }
+    }
+
+    public void Dispose()
+    {
+        objRef?.Dispose();
+    }
+}

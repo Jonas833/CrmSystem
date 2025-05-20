@@ -1,0 +1,21 @@
+﻿@page "/Pdf"
+@inject Crm.Services.PdfService PdfService
+@inject NavigationManager NavManager
+
+<h3>PDF-Test</h3>
+<button @onclick="GeneratePdf">PDF erstellen</button>
+
+@code {
+    private async Task GeneratePdf()
+    {
+        var bytes = PdfService.GenerateSimplePdf();
+
+        var fileName = "test.pdf";
+        var base64 = Convert.ToBase64String(bytes);
+        var dataUrl = $"data:application/pdf;base64,{base64}";
+
+        await JS.InvokeVoidAsync("downloadFile", fileName, dataUrl);
+    }
+
+    [Inject] IJSRuntime JS { get; set; } = default!;
+}

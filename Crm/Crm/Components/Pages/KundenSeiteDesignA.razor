@@ -1,0 +1,148 @@
+﻿@page "/11/{KundenId:int}"
+@rendermode InteractiveServer
+@inject Crm.Data.AppDbContext DbContext
+@inject NavigationManager Navigation
+@using Microsoft.EntityFrameworkCore
+@using Crm.Data
+
+<NavLink href="@($"/Kundenliste")" class="btn btn-outline-secondary mb-4">
+    ← Zurück zur Kundenliste
+</NavLink>
+
+@if (aktuellerKunde == null)
+{
+    <p>Lade Kundendaten ...</p>
+}
+else
+{
+    <div class="card shadow rounded p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0">@aktuellerKunde.Name</h2>
+            <button class="btn btn-danger" @onclick="KundeLöschen">Kunde löschen</button>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Notiz:</strong> @aktuellerKunde.Notiz</p>
+                <p><strong>Email:</strong> @aktuellerKunde.Email</p>
+                <p><strong>Telefon:</strong> @aktuellerKunde.Telenummer</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Unternehmen:</strong> @aktuellerKunde.Unternehmen</p>
+                <p><strong>Branche:</strong> @aktuellerKunde.Branche</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row text-center mb-4">
+        <div class="col-md-6">
+            <div class="kachel bg-success text-white p-4 rounded position-relative">
+                <div class="kreis bg-dark text-white d-flex justify-content-center align-items-center">
+                    <h3 class="mb-0">@aktuellerKunde.GesamtUmsatz €</h3>
+                </div>
+                <p class="mt-4">Gesamtumsatz</p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="kachel bg-success text-white p-4 rounded position-relative">
+                <div class="kreis bg-dark text-white d-flex justify-content-center align-items-center">
+                    <h3 class="mb-0">@aktuellerKunde.Anzahlverkäufe</h3>
+                </div>
+                <p class="mt-4">Anzahl Verkäufe</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow rounded p-4 mb-4">
+        <div class="d-flex justify-content-between">
+            <h4>Termine</h4>
+            <NavLink href="@($"/aktivität/{aktuellerKunde.Id}")" class="btn btn-outline-primary">Neue Aktivität</NavLink>
+        </div>
+        @if (aktuellerKunde.Termine?.Any() == true)
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Bezeichnung</th>
+                        <th>Betreff</th>
+                        <th>Notiz</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var termin in aktuellerKunde.Termine.OrderBy(t => t.Datum))
+                    {
+                        <tr>
+                            <td>@termin.Datum.ToShortDateString()</td>
+                            <td>@termin.TerminName</td>
+                            <td>@termin.Betreff</td>
+                            <td>@termin.Notiz</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p>Keine Termine vorhanden.</p>
+        }
+    </div>
+
+    <div class="card shadow rounded p-4">
+        <div class="d-flex justify-content-between">
+            <h4>Rechnungen</h4>
+            <NavLink href="@($"/test/{aktuellerKunde.Id}")" class="btn btn-outline-primary">Neue Rechnung</NavLink>
+        </div>
+        @if (aktuellerKunde.Rechnungen?.Any() == true)
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Rechnungsnummer</th>
+                        <th>Betrag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var rechnung in aktuellerKunde.Rechnungen.OrderBy(r => r.ErstellDatum))
+                    {
+                        <tr>
+                            <td>@rechnung.ErstellDatum.ToShortDateString()</td>
+                            <td>@rechnung.RechnungNr</td>
+                            <td>@rechnung.RechnungsBetrag €</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p>Keine Rechnungen vorhanden.</p>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int KundenId { get; set; }
+
+    private Kunde? aktuellerKunde;
+
+    protected override async Task OnInitializedAsync()
+    {
+        aktuellerKunde = await DbContext.Kunden
+            .Include(k => k.Termine)
+            .Include(k => k.Rechnungen)
+            .FirstOrDefaultAsync(k => k.Id == KundenId);
+    }
+
+    private async Task KundeLöschen()
+    {
+        var kunde = await DbContext.Kunden.FindAsync(KundenId);
+        if (kunde != null)
+        {
+            DbContext.Kunden.Remove(kunde);
+            await DbContext.SaveChangesAsync();
+            Navigation.NavigateTo("/kundenliste");
+        }
+    }
+}

@@ -1,0 +1,56 @@
+﻿@page "/kundenliste"
+@inject Crm.Data.AppDbContext DbContext
+@using Microsoft.EntityFrameworkCore
+
+<h3>Alle Kunden</h3>
+
+
+<NavLink href="/KundenAnlegen" class="btn btn-primary mb-3">
+    ➕ Neuen Kunden anlegen
+</NavLink>
+
+@if (kunden == null)
+{
+    <p><em>Lade Daten...</em></p>
+}
+else if (!kunden.Any())
+{
+    <p><em>Keine Kunden gefunden.</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Notiz</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var kunde in kunden)
+            {
+                <tr>
+                    <td>@kunde.Name</td>
+                    <td>@kunde.Notiz</td>
+                    
+                    <td>
+                        <NavLink href="@($"/KundenSeite/{kunde.Id}")" class="btn btn-primary mb-3">
+                            Kunden Anzeigen
+                        </NavLink>
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Crm.Data.Kunde> kunden;
+
+    protected override async Task OnInitializedAsync()
+    {
+        kunden = await DbContext.Kunden.ToListAsync();
+    }
+}
+

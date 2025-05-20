@@ -1,0 +1,34 @@
+﻿@page "/KundenAnlegen"
+@inject Crm.Data.AppDbContext DbContext
+@rendermode InteractiveServer
+
+<PageTitle>Counter</PageTitle>
+
+<h3>Neuen Kunden anlegen</h3>
+
+<NavLink href="/kundenliste" class="btn btn-primary mb-3">
+    Kunden Anzeigen
+</NavLink>
+
+<EditForm Model="newKunde" OnValidSubmit="HandleValidSubmit">
+    <InputText @bind-Value="newKunde.Name" placeholder="Name" class="form-control" />
+    <InputText @bind-Value="newKunde.Notiz" placeholder="Notiz" class="form-control" />
+    <InputText @bind-Value="newKunde.Email" placeholder="Email" class="form-control" />
+    <InputText @bind-Value="newKunde.Telenummer" placeholder="Phone" class="form-control" />
+    <InputText @bind-Value="newKunde.Unternehmen" placeholder="Unternhemen" class="form-control" />
+    <InputText @bind-Value="newKunde.Branche" placeholder="Branche" class="form-control" />
+
+
+    <button type="submit" class="btn btn-primary mt-2">Speichern</button>
+</EditForm>
+
+@code {
+    private Crm.Data.Kunde newKunde = new();
+
+    private async Task HandleValidSubmit()
+    {
+        DbContext.Kunden.Add(newKunde);
+        await DbContext.SaveChangesAsync();
+        newKunde = new(); 
+    }
+}

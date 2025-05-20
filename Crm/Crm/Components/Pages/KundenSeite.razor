@@ -1,0 +1,132 @@
+﻿@page "/KundenSeite/{KundenId:int}"
+@rendermode InteractiveServer
+@inject Crm.Data.AppDbContext DbContext
+@inject NavigationManager Navigation
+@using Microsoft.EntityFrameworkCore
+@using Crm.Data
+
+
+<NavLink href="@($"/Kundenliste")" class="btn btn-primary mb-3">
+    Zurück
+</NavLink>
+@if (aktuellerKunde == null)
+{
+    <p>Lade Kundendaten ...</p>
+}
+else
+{
+    <h1>@aktuellerKunde.Name</h1>
+
+    <button class="btn btn-danger" @onclick="KundeLöschen" type="button">Kunde löschen</button>
+
+    <p><strong>Notiz:</strong> @aktuellerKunde.Notiz</p>
+    <p><strong>Email:</strong> @aktuellerKunde.Email</p>
+    <p><strong>Telefon:</strong> @aktuellerKunde.Telenummer</p>
+    <p><strong>Unternehmen:</strong> @aktuellerKunde.Unternehmen</p>
+    <p><strong>Branche:</strong> @aktuellerKunde.Branche</p>
+
+    @if (aktuellerKunde.Termine?.Any() == true)
+    {
+        <h4>Termine</h4>
+
+        <NavLink href="@($"/aktivität/{aktuellerKunde.Id}")" class="btn btn-primary mb-3">
+           Neue aktivität
+        </NavLink>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th>Bezeichnung</th>
+                    <th>Betreff</th>
+                    <th>Notiz</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var termin in aktuellerKunde.Termine.OrderBy(t => t.Datum))
+                {
+                    <tr>
+                        <td>@termin.Datum.ToShortDateString()</td>
+                        <td>@termin.TerminName</td>
+                        <td>@termin.Betreff</td>
+                        <td>@termin.Notiz</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <NavLink href="@($"/aktivität/{aktuellerKunde.Id}")" class="btn btn-primary mb-3">
+            Neue aktivität
+        </NavLink>
+
+        <p>Keine Termine vorhanden.</p>
+    }
+    @if (aktuellerKunde?.Rechnungen?.Any() == true)
+    {
+        <h4>Rechnungen</h4>
+
+        <NavLink href="@($"/test/{aktuellerKunde.Id}")" class="btn btn-primary mb-3">
+            Neue Rechnung
+        </NavLink>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th>Rechnungsnummer</th>
+                    <th>Betrag</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var rechnung in aktuellerKunde.Rechnungen.OrderBy(r => r.ErstellDatum))
+                {
+                    <tr>
+                        <td>@rechnung.ErstellDatum.ToShortDateString()</td>
+                        <td>@rechnung.RechnungId</td>
+                        <td>@rechnung.RechnungsBetrag €</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <NavLink href="@($"/test/{aktuellerKunde.Id}")" class="btn btn-primary mb-3">
+            Neue Rechnung
+        </NavLink>
+       
+        <p>Keine Rechnungen vorhanden.</p>
+    }
+    <p><strong>Gesamtumsatz:</strong> @aktuellerKunde.GesamtUmsatz</p>
+    <p><strong>Anzahlverkäufe:</strong> @aktuellerKunde.Anzahlverkäufe</p>
+
+}
+
+@code {
+    [Parameter]
+    public int KundenId { get; set; }
+
+    private Kunde? aktuellerKunde;
+
+    protected override async Task OnInitializedAsync()
+    {
+        aktuellerKunde = await DbContext.Kunden
+            .Include(k => k.Termine)
+           .Include(k => k.Rechnungen)
+            .FirstOrDefaultAsync(k => k.Id == KundenId);
+    }
+
+    private async Task KundeLöschen()
+    {
+        Console.WriteLine("KundeLöschen wurde aufgerufen!");
+
+        var kunde = await DbContext.Kunden.FindAsync(KundenId);
+        if (kunde != null)
+        {
+            DbContext.Kunden.Remove(kunde);
+            await DbContext.SaveChangesAsync();
+            Navigation.NavigateTo("/kundenliste");
+        }
+    }
+}

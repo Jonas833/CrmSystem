@@ -1,0 +1,89 @@
+﻿@page "/aktivität/{KundenId:int}"
+@rendermode InteractiveServer
+@inject Crm.Data.AppDbContext DbContext
+@using Crm.Data
+@using Microsoft.EntityFrameworkCore
+
+<h3>Aktivitäten für Kunde @aktuellerKunde?.Name</h3>
+
+
+@if (aktuellerKunde == null)
+{
+    <p>Lade Kundendaten...</p>
+}
+else
+{
+    <NavLink href="@($"/KundenSeite/{aktuellerKunde.Id}")" class="btn btn-primary mb-3">
+       Zurück
+    </NavLink>
+    <EditForm Model="@newTermin" OnValidSubmit="HandleValidSubmit">
+        <InputText @bind-Value="newTermin.TerminName" class="form-control mb-2" placeholder="Bezeichnung" />
+        <InputDate @bind-Value="newTermin.Datum" class="form-control mb-2" />
+        <InputText @bind-Value="newTermin.Betreff" class="form-control mb-2" placeholder="Betreff" />
+        <InputText @bind-Value="newTermin.Notiz" class="form-control mb-2" placeholder="Notiz (optional)" />
+        <button class="btn btn-success" type="submit">Termin erstellen</button>
+    </EditForm>
+
+    <hr />
+
+    <h4>Geplante Termine</h4>
+    @if (aktuellerKunde.Termine.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th>Bezeichnung</th>
+                    <th>Betreff</th>
+                    <th>Notiz</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var termin in aktuellerKunde.Termine.OrderBy(t => t.Datum))
+                {
+                    <tr>
+                        <td>@termin.Datum.ToShortDateString()</td>
+                        <td>@termin.TerminName</td>
+                        <td>@termin.Betreff</td>
+                        <td>@termin.Notiz</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>Keine Termine vorhanden.</p>
+    }
+}
+
+@code {
+    [Parameter]
+    public int KundenId { get; set; }
+
+    private Kunde? aktuellerKunde;
+    private Termin newTermin = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        aktuellerKunde = await DbContext.Kunden
+            .Include(k => k.Termine) 
+            .FirstOrDefaultAsync(k => k.Id == KundenId);
+
+        newTermin.KundeId = KundenId;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        DbContext.Termine.Add(newTermin);
+        await DbContext.SaveChangesAsync();
+
+        
+        aktuellerKunde = await DbContext.Kunden
+            .Include(k => k.Termine)
+            .FirstOrDefaultAsync(k => k.Id == KundenId);
+
+        newTermin = new Termin { KundeId = KundenId };
+    }
+}
+

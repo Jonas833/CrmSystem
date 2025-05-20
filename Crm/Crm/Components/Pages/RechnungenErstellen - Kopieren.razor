@@ -1,0 +1,57 @@
+﻿@page "/Test/{KundenId:int}"
+@rendermode InteractiveServer
+@inject Crm.Data.AppDbContext DbContext
+@using Crm.Data
+@using Microsoft.EntityFrameworkCore
+
+@if (aktuellerKunde == null)
+{
+    <p>Lade Kundendaten...</p>
+}
+else
+{
+    <NavLink href="@($"/KundenSeite/{aktuellerKunde.Id}")" class="btn btn-primary mb-3">
+        Zurück
+    </NavLink>
+
+    <h1>Rechnung erstellen für @aktuellerKunde.Name</h1>
+
+    <EditForm Model="@newRechnung" OnValidSubmit="HandleValidSubmit">
+        <InputNumber @bind-Value="newRechnung.RechnungsBetrag" class="form-control mb-2" placeholder="Betrag" />
+        <InputDate @bind-Value="newRechnung.ErstellDatum" class="form-control mb-2" />
+
+        <button class="btn btn-success" type="submit">Rechnung erstellen</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int KundenId { get; set; }
+
+    private Kunde? aktuellerKunde;
+    private Rechnung newRechnung = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        aktuellerKunde = await DbContext.Kunden
+            .FirstOrDefaultAsync(k => k.Id == KundenId);
+
+        newRechnung.KundeId = KundenId;
+        newRechnung.ErstellDatum = DateTime.Today;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        DbContext.Rechnungen.Add(newRechnung);
+
+        if (aktuellerKunde != null)
+        {
+            aktuellerKunde.GesamtUmsatz = (aktuellerKunde.GesamtUmsatz ?? 0) + newRechnung.RechnungsBetrag;
+            aktuellerKunde.Anzahlverkäufe = (aktuellerKunde.Anzahlverkäufe ?? 0) + 1;
+        }
+
+        await DbContext.SaveChangesAsync();
+
+        newRechnung = new Rechnung { KundeId = KundenId, ErstellDatum = DateTime.Today };
+    }
+}
