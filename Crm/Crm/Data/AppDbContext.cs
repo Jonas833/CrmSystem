@@ -51,6 +51,13 @@ namespace Crm.Data
         public Kunde Kunde { get; set; } = null!;
 
     }
+    public class Konto
+    {
+        public string KontoName { get; set; } = string.Empty;
+        public string Passwort { get; set; } = string.Empty;
+        public string Rolle { get; set; } = string.Empty;
+
+    }
 
 }
 
