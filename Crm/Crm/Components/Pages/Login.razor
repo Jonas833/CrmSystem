@@ -1,0 +1,69 @@
+@page "/Login"
+@rendermode InteractiveServer
+@inject Crm.Data.AppDbContext DbContext
+@using Crm.Data
+@using Microsoft.EntityFrameworkCore
+
+
+
+
+<h3>Login</h3>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="text-danger">@ErrorMessage</div>
+}
+
+<EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Username</label>
+        <InputText class="form-control" @bind-Value="loginModel.Username" />
+    </div>
+
+    <div class="mb-3">
+        <label>Password</label>
+        <InputText class="form-control" @bind-Value="loginModel.Password" type="password" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Login</button>
+</EditForm>
+
+
+@code {
+    private LoginModel loginModel = new();
+    private string? ErrorMessage;
+
+    private async Task HandleLogin()
+    {
+        var user = await Db.Users
+            .FirstOrDefaultAsync(u => u.Username == loginModel.Username);
+
+        if (user == null)
+        {
+            ErrorMessage = "Benutzer nicht gefunden.";
+            return;
+        }
+
+        
+        if (user.PasswordHash == loginModel.Password)
+        {
+            await ((CustomAuthStateProvider)AuthStateProvider)
+                .MarkUserAsAuthenticated(user.Username);
+
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            ErrorMessage = "Falsches Passwort.";
+        }
+    }
+
+    public class LoginModel
+    {
+        public string? Username { get; set; }
+        public string? Password { get; set; }
+    }
+}
