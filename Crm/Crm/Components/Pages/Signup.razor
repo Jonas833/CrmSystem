@@ -1,0 +1,41 @@
+@page "/Sign.up"
+@rendermode InteractiveServer
+@inject Crm.Data.AppDbContext DbContext
+@using Crm.Data
+@using Microsoft.EntityFrameworkCore
+
+
+<h2> SignUp<h2>
+<EditForm Model="new_compamy" OnValidSubmit="HandleValidSubmit">
+    <h3>Company Data <h3>
+    <InputText @bind-Value="newcompany.Name" placeholder="Name" class="form-control" />
+    <InputText @bind-Value="newcompany.Adresse" placeholder="Notiz" class="form-control" />
+    <InputText @bind-Value="newKunde.Email" placeholder="Email" class="form-control" />
+    <InputText @bind-Value="newKunde.Telenummer" placeholder="Phone" class="form-control" />
+    <InputText @bind-Value="newcompamy." placeholder="Unternhemen" class="form-control" />
+    <h3>SignUp<h3>
+    <inputText @bind-Value="newkonto.Name" placeholder="Username" class="form-control" />
+    <inputText @bind-Value="newkonto.Email" placeholder="Email" class="form-control" />
+    <inputText @bind-Value="newkonto.Password" placeholder="Password" class="form-control" />
+
+    <button type="submit" class="btn btn-primary mt-2">submit</button>
+</EditForm>
+
+@code {
+    private Crm.Data.Kunde newKonto = new();
+    private Crm.Data.Company newCompany = new();
+
+    private async Task HandleValidSubmit_Konto()
+    {
+        DbContext.Kunden.Add(newKonto);
+        await DbContext.SaveChangesAsync();
+        newKonto = new(); 
+    }
+    private async Task HandleValidSubmit_company()
+    {
+        DbContext.Kunden.Add(newCompany);
+        await DbContext.SaveChangesAsync();
+        newCompany = new(); 
+    }
+    
+}
