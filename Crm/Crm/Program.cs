@@ -1,18 +1,20 @@
 using Crm.Components;
 using Crm.Data;
 using Microsoft.EntityFrameworkCore;
-using QuestPDF.Infrastructure;
-using Crm.Services;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
 
-QuestPDF.Settings.License = LicenseType.Community;
+var connString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' nicht gefunden.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseMySql(connString, ServerVersion.AutoDetect(connString))
+);
 
-builder.Services.AddScoped<PdfService>();
+
+
 
 
 builder.Services.AddHttpClient(); 
