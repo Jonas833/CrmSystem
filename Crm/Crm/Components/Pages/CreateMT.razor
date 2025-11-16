@@ -1,8 +1,9 @@
 @page "/newworker"
 @inject AppDbContext Db
 
-<h2>Neuer Mitarbeiter</h2>
 
+<h2>Neuer Mitarbeiter</h2> 
+    
 @if (!string.IsNullOrEmpty(GeneratedPassword))
 {
     <div class="alert alert-success">
@@ -29,15 +30,17 @@
 </EditForm>
 
 @code {
+    // only for Admin 
+    // email with usermmae and psw an Admin
     private User newKonto = new();
     private string? GeneratedPassword;
 
     private async Task HandleValidSubmit()
     {
-        // Zufälliges Passwort generieren
+        
         GeneratedPassword = GenerateRandomPassword(10);
 
-        // Passwort optional hashen (empfohlen)
+        
         var hashed = BCrypt.Net.BCrypt.HashPassword(GeneratedPassword);
 
         newKonto.PasswordHash = hashed;
@@ -45,7 +48,7 @@
         Db.Users.Add(newKonto);
         await Db.SaveChangesAsync();
 
-        newKonto = new User(); // Formular zurücksetzen
+        newKonto = new User(); 
     }
 
     private static string GenerateRandomPassword(int length)
